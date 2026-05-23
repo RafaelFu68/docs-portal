@@ -49,17 +49,10 @@ $Str_Congrats2        = Get-UTF8String "5oKo54++5Zyo5Y+v5Lul5a6J5YWo5Zyw5bCH5pW0
 $PrimaryColor = "#818cf8"
 $SecondaryColor = "#0b0f19"
 
-# 1. Dynamic Password Prompt (only if not passed via parameter)
+# 1. Fallback Password Configuration (預設免密碼輸入，全自動執行！)
 if ([string]::IsNullOrWhiteSpace($Password)) {
-    Write-Host "`n$Str_HeaderLine" -ForegroundColor Cyan
-    Write-Host $Str_TitleBanner -ForegroundColor Cyan
-    Write-Host $Str_HeaderLine -ForegroundColor Cyan
-    $Password = Read-Host $Str_Prompt -MaskInput
-}
-
-if ([string]::IsNullOrWhiteSpace($Password)) {
-    Write-Error "Password cannot be empty! Canceled build."
-    Exit
+    # 當子專案未設定 password.txt 時使用的備用預設密碼
+    $Password = "123456"
 }
 
 # 2. Define directory structure
@@ -67,8 +60,10 @@ $ParentDir = Split-Path -Parent $PSScriptRoot
 $PortalDir = Join-Path $ParentDir "docs-portal"
 $DestProjectsDir = Join-Path $PortalDir "projects"
 
-# Ensure projects directory exists
-if (!(Test-Path $DestProjectsDir)) {
+# Ensure projects directory exists and is clean (remove obsolete build folders)
+if (Test-Path $DestProjectsDir) {
+    Remove-Item -Recurse -Force (Join-Path $DestProjectsDir "*") -ErrorAction SilentlyContinue | Out-Null
+} else {
     New-Item -ItemType Directory -Path $DestProjectsDir | Out-Null
 }
 
@@ -88,6 +83,7 @@ $Name_KcgControl    = Get-UTF8String "S0NHIOaOp+aSrQ=="     # KCG 控播
 $Name_QaMini        = Get-UTF8String "5ZWP562U5bCP56iL5byP" # 問答小程式
 
 $SyncedProjectsCount = 0
+$ProjOriginalPaths = @{}
 
 foreach ($Proj in $Projects) {
     $ProjDocsPath = Join-Path $Proj.FullName "docs"
@@ -134,8 +130,10 @@ foreach ($Proj in $Projects) {
         
         Copy-Item -Path "$ProjDocsPath\*" -Destination $TargetDir -Recurse -Force | Out-Null
         
-        # 排除並刪除未加密的原始 Markdown 與編譯 Python 檔案，落實對策B以確保安全性
-        Get-ChildItem -Path $TargetDir -File -Recurse | Where-Object { $_.Extension.ToLower() -in @('.md', '.py') } | Remove-Item -Force | Out-Null
+        # 排除並刪除未加密的原始 Markdown、編譯 Python 檔案、密碼設定檔及本地開發加密殘留檔，確保安全性
+        Get-ChildItem -Path $TargetDir -File -Recurse | Where-Object { 
+            $_.Extension.ToLower() -in @('.md', '.py') -or $_.Name.ToLower() -in @('password.txt', 'index_secure.html')
+        } | Remove-Item -Force | Out-Null
         
         # 動態插入「返回門戶」按鈕 (於未加密 HTML 狀態下注入)
         $TargetIndexHtml = Join-Path $TargetDir "index.html"
@@ -162,6 +160,9 @@ foreach ($Proj in $Projects) {
             [System.IO.File]::WriteAllText($TargetIndexHtml, $HtmlContent, [System.Text.Encoding]::UTF8)
         }
         
+        # 紀錄原始 docs 資料夾位置，供後續加密時尋找密碼檔
+        $ProjOriginalPaths[$TargetProjName] = $ProjDocsPath
+        
         Write-Host $Str_SyncSuccess -ForegroundColor DarkGreen
         $SyncedProjectsCount++
     } else {
@@ -178,26 +179,14 @@ Write-Host "`n$Str_HeaderLine" -ForegroundColor Cyan
 Write-Host $Str_EncryptBanner -ForegroundColor Cyan
 Write-Host $Str_HeaderLine -ForegroundColor Cyan
 
-# A. Encrypt Portal Landing Page
-Write-Host $Str_EncryptPortal -ForegroundColor White
-npx -y staticrypt src/index.html `
-  -d . `
-  -p "$Password" `
-  -c false `
-  --short `
-  --template-title "$Str_PortalTitle" `
-  --template-color-primary "$PrimaryColor" `
-  --template-color-secondary "$SecondaryColor" `
-  --template-instructions "$Str_Instructions" `
-  --template-error "$Str_ErrorMsg" `
-  --template-placeholder "$Str_Placeholder" `
-  --template-button "$Str_BtnLabel" `
-  --template-remember "$Str_Remember" | Out-Null
+# A. Publish Portal Landing Page (No Encryption, Open Access)
+Write-Host "Publishing unencrypted Portal Landing Page (index.html)..." -ForegroundColor White
+Copy-Item -Path "src/index.html" -Destination "index.html" -Force | Out-Null
 
 if (Test-Path "index.html") {
-    Write-Host $Str_PortalSuccess -ForegroundColor Green
+    Write-Host "   -> Portal page published successfully!" -ForegroundColor Green
 } else {
-    Write-Error $Str_PortalFail
+    Write-Error "Failed to publish portal landing page!"
 }
 
 # B. Encrypt Subprojects
@@ -220,6 +209,17 @@ if ($SyncedProjectsCount -gt 0) {
         $SubTitle = "$ProjName$Str_SubTitleSuffix"
         $SubInstructions = "$Str_SubPrefix$ProjName$Str_SubSuffix"
         
+        # 尋找是否有專案特定的密碼檔
+        $SubPassword = $Password
+        $OrigDocsPath = $ProjOriginalPaths[$ProjName]
+        if ($OrigDocsPath) {
+            $PassFile = Join-Path $OrigDocsPath "password.txt"
+            if (Test-Path $PassFile) {
+                $SubPassword = [System.IO.File]::ReadAllText($PassFile, [System.Text.Encoding]::UTF8).Trim()
+                Write-Host "      -> [Password] Using project-specific password from docs\password.txt" -ForegroundColor Gray
+            }
+        }
+        
         # Copy raw file to temp directory
         $TempRawFile = Join-Path $TempEncryptDir "index.html"
         Copy-Item -Path $IndexFile.FullName -Destination $TempRawFile -Force | Out-Null
@@ -227,7 +227,7 @@ if ($SyncedProjectsCount -gt 0) {
         # Encrypt from temp and write back to project directory
         npx -y staticrypt "$TempRawFile" `
           -d "$ProjDir" `
-          -p "$Password" `
+          -p "$SubPassword" `
           -c false `
           --short `
           --template-title "$SubTitle" `
