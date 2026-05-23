@@ -1,4 +1,0 @@
-if \"%%BRANCH%\"==\"\" set BRANCH=main  upload.bat 
-:end  upload.bat 
-) else (  upload.bat 
-    echo.  upload.bat 
