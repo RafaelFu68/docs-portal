@@ -1,56 +1,53 @@
-ï»¿@echo off
-:: Force UTF-8 encoding for nice console fonts and characters
-chcp 65001 > nul
-
-title é–€æˆ¶ç³»çµ±ä¸€éµè‡ªå‹• Git éƒ¨ç½²ç™¼å¸ƒå·¥å…·
-
-echo =====================================================================
-echo  [DevPortal Git Deployer]
-echo  æº–å‚™é–‹å§‹ï¼šå°‡å·²ç·¨è­¯åŠ å¯†ä¹‹æ‰‹å†Šé–€æˆ¶æŽ¨é€è‡³ GitHub Pages...
-echo =====================================================================
-echo.
-
-:: Git è‡ªå‹•åŒ–ä¸Šå‚³
-echo  é–‹å§‹è‡ªå‹•æŽ¨é€åˆ° GitHub å€‰åº«...
-echo ---------------------------------------------------------------------
-:: æª¢æŸ¥æ˜¯å¦ç‚º Git å€‰åº«
-if not exist ".git" (
-    echo âš ï¸ [æç¤º] æª¢æ¸¬åˆ°æ­¤ç›®éŒ„å°šæœªåˆå§‹åŒ– Git å€‰åº«ã€‚
-    echo æ­£åœ¨å˜—è©¦è‡ªå‹•åˆå§‹åŒ–æœ¬åœ° Git...
-    git init
-    echo.
-    echo è«‹ç¢ºä¿æ‚¨å·²é—œè¯é ç«¯å€‰åº«ï¼Œæˆ–ä½¿ç”¨ git remote add origin é€²è¡Œé—œè¯ã€‚
-    echo.
-)
-
-echo æ­£åœ¨å°‡æª”æ¡ˆåŠ å…¥ Git æš«å­˜å€...
-git add .
-
-echo æ­£åœ¨å»ºç«‹å®‰å…¨éƒ¨ç½²æäº¤ (Commit)...
-git commit -m "Deploy encrypted developer manuals via DevPortal"
-
-echo æ­£åœ¨æŽ¨é€è‡³é ç«¯ GitHub ä¼ºæœå™¨...
-:: è‡ªå‹•åµæ¸¬ç•¶å‰åˆ†æ”¯åç¨± (é€šå¸¸ç‚º main æˆ– master)
-for /f "tokens=*" %%i in ('git branch --show-current') do set BRANCH=%%i
-if "%BRANCH%"="" set BRANCH=main
-
-git push origin %BRANCH%
-
-if %errorlevel% neq 0 (
-    echo.
-    echo âŒ [éŒ¯èª¤] æŽ¨é€è‡³ GitHub å¤±æ•—ï¼
-    echo è«‹ç¢ºèªï¼š
-    echo  1. æ‚¨æ˜¯å¦å·²é—œè¯é ç«¯å€‰åº«ã€‚
-    echo  2. æ‚¨çš„ç¶²è·¯é€£ç·šèˆ‡ SSH/HTTPS æŽˆæ¬Šæ˜¯å¦æ­£å¸¸ã€‚
-    echo  3. æ‚¨çš„ GitHub å¸³è™Ÿæ˜¯å¦æœ‰æŽ¨é€æ¬Šé™ã€‚
-) else (
-    echo.
-    echo ðŸŽ‰ [æˆåŠŸ] æŠ€è¡“æ‰‹å†Šå·²æˆåŠŸåŒæ­¥ä¸¦æŽ¨é€åˆ° GitHubï¼
-    echo æ‚¨å¯ä»¥ç¨å¾Œé–‹å•Ÿ GitHub Pages ç¶²å€æŸ¥é–±æœ€æ–°çš„åŠ å¯†æ‰‹å†Šã€‚
-)
-
-:end
-echo =====================================================================
-echo  ç™¼å¸ƒæµç¨‹åŸ·è¡Œå®Œç•¢ï¼è«‹æŒ‰ä»»æ„éµé—œé–‰æ­¤è¦–çª—...
-echo =====================================================================
-pause > nul
+@echo off
+chcp 65001 > nul
+
+title ªù¤á¨t²Î¤@Áä¦Û°Ê Git ³¡¸pµo¥¬¤u¨ã
+
+echo =====================================================================
+echo  [DevPortal Git Deployer]
+echo  ·Ç³Æ¶}©l¡G±N¤w½sÄ¶¥[±K¤§¤â¥Uªù¤á±À°e¦Ü GitHub Pages...
+echo =====================================================================
+echo.
+
+:: Git ¦Û°Ê¤Æ¤W¶Ç
+echo  ¶}©l¦Û°Ê±À°e¨ì GitHub ­Ü®w...
+echo ---------------------------------------------------------------------
+
+:: ÀË¬d¬O§_¬° Git ­Ü®w
+if not exist ".git" (
+    echo ?? [´£¥Ü] ÀË´ú¨ì¦¹¥Ø¿ý©|¥¼ªì©l¤Æ Git ­Ü®w¡C
+    echo ¥¿¦b¹Á¸Õ¦Û°Êªì©l¤Æ¥»¦a Git...
+    git init
+)
+
+echo ¥¿¦b±NÀÉ®×¥[¤J Git ¼È¦s°Ï...
+git add .
+
+echo ¥¿¦b«Ø¥ß¦w¥þ³¡¸p´£¥æ (Commit)...
+git commit -m "Deploy encrypted developer manuals via DevPortal"
+
+echo ¥¿¦b±j¨îÂÐ»\±À°e¦Ü»·ºÝ GitHub ¦øªA¾¹...
+:: Àò¨ú·í«e¤À¤ä¦WºÙ
+for /f "tokens=*" %%i in ('git branch --show-current') do set BRANCH=%%i
+if "%BRANCH%"=="" set BRANCH=main
+
+git push origin %BRANCH% --force
+
+if %errorlevel% neq 0 (
+    echo.
+    echo ? [¿ù»~] ±À°e¦Ü GitHub ¥¢±Ñ¡I
+    echo ½Ð½T»{¡G
+    echo  1. ±z¬O§_¤wÃöÁp»·ºÝ­Ü®w (git remote add origin ...)¡C
+    echo  2. ºô¸ô³s½u»P SSH/HTTPS ±ÂÅv¬O§_¥¿±`¡C
+    echo  3. ±z¹ï¸Ó­Ü®w¬O§_¦³±À°eÅv­­¡C
+) else (
+    echo.
+    echo ?? [¦¨¥\] §Þ³N¤â¥U¤w¦¨¥\±j¨îÂÐ»\±À°e¦Ü GitHub¡I
+)
+
+:end
+echo.
+echo =====================================================================
+echo  µo¥¬¬yµ{°õ¦æ§¹²¦¡I½Ð«ö¥ô·NÁäÃö³¬¦¹µøµ¡...
+echo =====================================================================
+pause
