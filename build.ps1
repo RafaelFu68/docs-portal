@@ -81,18 +81,27 @@ $Projects = Get-ChildItem -Path $ParentDir -Directory | Where-Object {
     $_.Name -ne "docs-portal" -and (Test-Path (Join-Path $_.FullName "docs"))
 }
 
-$KcgTranslatorName = Get-UTF8String "S0NH5Y2z5pmC57+76K2v" # KCG即時翻譯
-$KcgSubtitlesName  = Get-UTF8String "S0NH5Y2z5pmC5a2X5bmV" # KCG即時字幕
+# Base64 decoded Chinese names to avoid encoding issues
+$Name_KcgTranslator = Get-UTF8String "S0NH5Y2z5pmC57+76K2v" # KCG即時翻譯
+$Name_KcgSubtitles  = Get-UTF8String "S0NH5Y2z5pmC5a2X5bmV" # KCG即時字幕
+$Name_KcgControl    = Get-UTF8String "S0NHIOaOp+aSrQ=="     # KCG 控播
+$Name_QaMini        = Get-UTF8String "5ZWP562U5bCP56iL5byP" # 問答小程式
 
 $SyncedProjectsCount = 0
 
 foreach ($Proj in $Projects) {
     $ProjDocsPath = Join-Path $Proj.FullName "docs"
     
-    # 專案名稱對應邏輯：如果專案資料夾是 "KCG即時翻譯"，發布時使用 "KCG即時字幕"
+    # 專案名稱對應邏輯：對應至門戶 index.html 預期之專案目錄名稱
     $TargetProjName = $Proj.Name
-    if ($Proj.Name -eq $KcgTranslatorName) {
-        $TargetProjName = $KcgSubtitlesName
+    if ($Proj.Name -eq $Name_KcgTranslator) {
+        $TargetProjName = $Name_KcgSubtitles
+    } elseif ($Proj.Name -eq $Name_KcgControl) {
+        $TargetProjName = "kcg_control"
+    } elseif ($Proj.Name -eq "basketball") {
+        $TargetProjName = "basketball-main"
+    } elseif ($Proj.Name -eq $Name_QaMini) {
+        $TargetProjName = "qa-mini-program"
     }
     
     $TargetDir = Join-Path $DestProjectsDir $TargetProjName
