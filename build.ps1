@@ -224,6 +224,9 @@ if ($SyncedProjectsCount -gt 0) {
         $TempRawFile = Join-Path $TempEncryptDir "index.html"
         Copy-Item -Path $IndexFile.FullName -Destination $TempRawFile -Force | Out-Null
         
+        # [安全防護] 徹底刪除發布目錄下的原始 index.html，確保加密失敗時不會遺留未加密的敏感檔案！
+        Remove-Item -Path $IndexFile.FullName -Force | Out-Null
+        
         # Encrypt from temp and write back to project directory
         npx -y staticrypt "$TempRawFile" `
           -d "$ProjDir" `
