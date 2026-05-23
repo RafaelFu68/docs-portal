@@ -1,0 +1,12 @@
+# 排除原始未加密網頁
+/src/
+
+# 排除依賴與系統快取
+node_modules/
+.DS_Store
+Thumbs.db
+
+# 排除本機編譯產生的備份或記錄檔
+*.log
+*.bak
+*.tmp
